@@ -1423,6 +1423,13 @@ static RValue builtin_abs(MAYBE_UNUSED VMContext* ctx, RValue* args, int32_t arg
     return RValue_makeReal(GMLReal_fabs(RValue_toReal(args[0])));
 }
 
+static RValue builtin_frac(MAYBE_UNUSED VMContext* ctx, RValue* args, int32_t argCount) {
+    if (1 > argCount) return RValue_makeReal(0.0);
+    GMLReal val = RValue_toReal(args[0]);
+    GMLReal truncated = (val >= 0.0) ? GMLReal_floor(val) : GMLReal_ceil(val);
+    return RValue_makeReal(val - truncated);
+}
+
 static RValue builtin_sign(MAYBE_UNUSED VMContext* ctx, RValue* args, int32_t argCount) {
     if (1 > argCount) return RValue_makeReal(0.0);
     GMLReal val = RValue_toReal(args[0]);
@@ -10230,6 +10237,7 @@ void VMBuiltins_registerAll(VMContext* ctx) {
     VM_registerBuiltin(ctx, "ceil", builtin_ceil);
     VM_registerBuiltin(ctx, "round", builtin_round);
     VM_registerBuiltin(ctx, "abs", builtin_abs);
+    VM_registerBuiltin(ctx, "frac", builtin_frac);
     VM_registerBuiltin(ctx, "sign", builtin_sign);
     VM_registerBuiltin(ctx, "max", builtin_max);
     VM_registerBuiltin(ctx, "min", builtin_min);
