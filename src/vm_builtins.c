@@ -8485,6 +8485,116 @@ static RValue builtin_tile_layer_shift(MAYBE_UNUSED VMContext* ctx, RValue* args
     return RValue_makeUndefined();
 }
 
+// tile_add(background, left, top, width, height, x, y, depth) - creates a new tile in the current room and returns its id.
+static RValue builtin_tile_add(VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    Room* room = runner->currentRoom;
+    if (room == nullptr) return RValue_makeReal(-1.0);
+
+    int32_t backgroundIndex = RValue_toInt32(args[0]);
+    if (0 > backgroundIndex || backgroundIndex >= (int32_t) ctx->dataWin->bgnd.count) {
+        fprintf(stderr, "VM: tile_add: background does not exist (%d)\n", backgroundIndex);
+        return RValue_makeReal(-1.0);
+    }
+
+    uint32_t newId = runner->nextInstanceId++;
+    uint32_t newCount = room->tileCount + 1;
+    room->tiles = safeRealloc(room->tiles, newCount * sizeof(RoomTile));
+    RoomTile* tile = &room->tiles[room->tileCount];
+    tile->x = RValue_toInt32(args[5]);
+    tile->y = RValue_toInt32(args[6]);
+    tile->useSpriteDefinition = DataWin_isVersionAtLeast(runner->dataWin, 2, 0, 0, 0);
+    tile->backgroundDefinition = backgroundIndex;
+    tile->sourceX = RValue_toInt32(args[1]);
+    tile->sourceY = RValue_toInt32(args[2]);
+    tile->width = (uint32_t) RValue_toInt32(args[3]);
+    tile->height = (uint32_t) RValue_toInt32(args[4]);
+    tile->tileDepth = RValue_toInt32(args[7]);
+    tile->instanceID = newId;
+    tile->scaleX = 1.0f;
+    tile->scaleY = 1.0f;
+    tile->color = 0xFFFFFFFFu;
+    tile->alpha = 1.0f;
+    room->tileCount = newCount;
+
+    runner->drawableListStructureDirty = true;
+    return RValue_makeReal((GMLReal) newId);
+}
+
+// tile_exists(id) - returns true if a tile with that id exists in the current room.
+static RValue builtin_tile_exists(VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    Room* room = runner->currentRoom;
+    if (room == nullptr) return RValue_makeBool(false);
+    uint32_t id = (uint32_t) RValue_toInt32(args[0]);
+    repeat(room->tileCount, i) {
+        if (room->tiles[i].instanceID == id) return RValue_makeBool(true);
+    }
+    return RValue_makeBool(false);
+}
+
+// tile_layer_find(depth, x, y) - returns the id of the topmost tile at depth covering (x, y), or -1.
+static RValue builtin_tile_layer_find(VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    Room* room = runner->currentRoom;
+    if (room == nullptr) return RValue_makeReal(-1.0);
+    int32_t depth = RValue_toInt32(args[0]);
+    GMLReal qx = RValue_toReal(args[1]);
+    GMLReal qy = RValue_toReal(args[2]);
+    // Walk in reverse so the most recently added tile (drawn on top) wins.
+    for (int32_t i = (int32_t) room->tileCount - 1; i >= 0; i--) {
+        RoomTile* tile = &room->tiles[i];
+        if (tile->tileDepth != depth) continue;
+        GMLReal w = (GMLReal) tile->width * (GMLReal) tile->scaleX;
+        GMLReal h = (GMLReal) tile->height * (GMLReal) tile->scaleY;
+        if (qx >= (GMLReal) tile->x && qx < (GMLReal) tile->x + w && qy >= (GMLReal) tile->y && qy < (GMLReal) tile->y + h) {
+            return RValue_makeReal((GMLReal) tile->instanceID);
+        }
+    }
+    return RValue_makeReal(-1.0);
+}
+
+// tile_layer_delete(depth) - removes every tile at the given depth from the current room.
+static RValue builtin_tile_layer_delete(VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    Room* room = runner->currentRoom;
+    if (room == nullptr) return RValue_makeUndefined();
+    int32_t depth = RValue_toInt32(args[0]);
+    uint32_t write = 0;
+    bool removedAny = false;
+    repeat(room->tileCount, i) {
+        if (room->tiles[i].tileDepth == depth) { removedAny = true; continue; }
+        if (write != i) room->tiles[write] = room->tiles[i];
+        write++;
+    }
+    room->tileCount = write;
+    if (removedAny) runner->drawableListStructureDirty = true;
+    return RValue_makeUndefined();
+}
+
+// tile_get_ids_at_depth(depth) - returns a 1D array of tile ids whose tileDepth matches.
+static RValue builtin_tile_get_ids_at_depth(VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    Room* room = runner->currentRoom;
+    int32_t depth = RValue_toInt32(args[0]);
+    int32_t matchCount = 0;
+    if (room != nullptr) {
+        repeat(room->tileCount, i) {
+            if (room->tiles[i].tileDepth == depth) matchCount++;
+        }
+    }
+    GMLArray* out = GMLArray_create(matchCount > 0 ? matchCount : 1);
+    if (matchCount > 0) {
+        int32_t w = 0;
+        repeat(room->tileCount, i) {
+            RoomTile* tile = &room->tiles[i];
+            if (tile->tileDepth != depth) continue;
+            *GMLArray_slot(out, w++) = RValue_makeReal((GMLReal) tile->instanceID);
+        }
+    }
+    return RValue_makeArray(out);
+}
+
 // ===[ Layer Functions ]===
 
 static RValue builtin_layer_force_draw_depth(VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
@@ -10764,10 +10874,17 @@ void VMBuiltins_registerAll(VMContext* ctx) {
     VM_registerBuiltin(ctx, "mp_potential_step_object", builtin_mp_potential_step_object);
     VM_registerBuiltin(ctx, "mp_potential_settings", builtin_mp_potential_settings);
 
-    // Tile layers
-    VM_registerBuiltin(ctx, "tile_layer_hide", builtin_tile_layer_hide);
-    VM_registerBuiltin(ctx, "tile_layer_show", builtin_tile_layer_show);
-    VM_registerBuiltin(ctx, "tile_layer_shift", builtin_tile_layer_shift);
+    // Tile layers (GM:S 1.x)
+    if (!isGMS2) {
+        VM_registerBuiltin(ctx, "tile_layer_hide", builtin_tile_layer_hide);
+        VM_registerBuiltin(ctx, "tile_layer_show", builtin_tile_layer_show);
+        VM_registerBuiltin(ctx, "tile_layer_shift", builtin_tile_layer_shift);
+        VM_registerBuiltin(ctx, "tile_add", builtin_tile_add);
+        VM_registerBuiltin(ctx, "tile_exists", builtin_tile_exists);
+        VM_registerBuiltin(ctx, "tile_layer_find", builtin_tile_layer_find);
+        VM_registerBuiltin(ctx, "tile_layer_delete", builtin_tile_layer_delete);
+        VM_registerBuiltin(ctx, "tile_get_ids_at_depth", builtin_tile_get_ids_at_depth);
+    }
 
     // Layer
     VM_registerBuiltin(ctx, "layer_force_draw_depth", builtin_layer_force_draw_depth);
