@@ -27,6 +27,7 @@
 #include "audio_system.h"
 #include "file_system.h"
 #include "md5.h"
+#include "sha1.h"
 #include "base64.h"
 
 #include "clock_gettime_macos.h"
@@ -6387,10 +6388,35 @@ static RValue builtin_buffer_md5(MAYBE_UNUSED VMContext* ctx, RValue* args, MAYB
     char* hex = safeMalloc(33);
     static const char HEX[] = "0123456789abcdef";
     for (int32_t i = 0; 16 > i; i++) {
-        hex[i * 2]     = HEX[(digest[i] >> 4) & 0xF];
-        hex[i * 2 + 1] = HEX[digest[i] & 0xF];
+        sprintf(&hex[i * 2], "%02x", digest[i]);
     }
     hex[32] = '\0';
+    return RValue_makeOwnedString(hex);
+}
+
+// buffer_sha1(buffer, offset, size) -> hex string (40 chars, lowercase). Uses Steve Reid's C implementation in vendor/sha1.
+static RValue builtin_buffer_sha1(MAYBE_UNUSED VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    int32_t id = RValue_toInt32(args[0]);
+    int32_t offset = RValue_toInt32(args[1]);
+    int32_t size = RValue_toInt32(args[2]);
+    GmlBuffer* buf = gmlBufferGet(runner, id);
+    if (buf == nullptr || 0 > offset || 0 > size) return RValue_makeOwnedString(safeStrdup(""));
+    if (offset + size > buf->size) {
+        if (buf->size > offset) size = buf->size - offset; else size = 0;
+    }
+
+    SHA1_CTX sctx;
+    SHA1Init(&sctx);
+    if (size > 0) SHA1Update(&sctx, buf->data + offset, (unsigned int) size);
+    unsigned char digest[20];
+    SHA1Final(digest, &sctx);
+
+    char* hex = safeMalloc(41);
+    for (int32_t i = 0; 20 > i; i++) {
+        sprintf(&hex[i * 2], "%02x", digest[i]);
+    }
+    hex[40] = '\0';
     return RValue_makeOwnedString(hex);
 }
 
@@ -11193,6 +11219,7 @@ void VMBuiltins_registerAll(VMContext* ctx) {
     VM_registerBuiltin(ctx, "base64_encode", builtin_base64_encode);
     VM_registerBuiltin(ctx, "base64_decode", builtin_base64_decode);
     VM_registerBuiltin(ctx, "buffer_md5", builtin_buffer_md5);
+    VM_registerBuiltin(ctx, "buffer_sha1", builtin_buffer_sha1);
     VM_registerBuiltin(ctx, "buffer_get_surface", builtin_buffer_get_surface);
 
     // PSN
