@@ -4274,6 +4274,20 @@ static RValue builtin_audio_channel_num(VMContext* ctx, RValue* args, MAYBE_UNUS
     return RValue_makeUndefined();
 }
 
+// Old version of builtin_audio_play_sound, the GMS2 compatibility script sets the priority to 10 for... some reason
+static RValue builtin_sound_play(VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
+    AudioSystem* audio = getAudioSystem(ctx);
+    if (audio == nullptr) return RValue_makeReal(-1.0);
+
+    // Do not attempt to play "undefined" sounds (matches GameMaker-HTML5 behavior, and fixes random sound effects on room transitions in DELTARUNE Chapter 2)
+    if (args[0].type == RVALUE_UNDEFINED)
+        return RValue_makeReal(-1.0);
+
+    int32_t soundIndex = RValue_toInt32(args[0]);
+    int32_t instanceId = audio->vtable->playSound(audio, soundIndex, 10, false);
+    return RValue_makeReal((GMLReal) instanceId);
+}
+
 static RValue builtin_audio_play_sound(VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
     AudioSystem* audio = getAudioSystem(ctx);
     if (audio == nullptr) return RValue_makeReal(-1.0);
@@ -11218,7 +11232,9 @@ void VMBuiltins_registerAll(VMContext* ctx) {
     VM_registerBuiltin(ctx, "audio_sound_set_track_position", builtin_audio_sound_set_track_position);
     VM_registerBuiltin(ctx, "audio_create_stream", builtin_audio_create_stream);
     VM_registerBuiltin(ctx, "audio_destroy_stream", builtin_audio_destroy_stream);
-
+    if (!isGMS2) {
+        VM_registerBuiltin(ctx, "sound_play", builtin_sound_play);
+    }
     // Application surface
     VM_registerBuiltin(ctx, "application_surface_enable", builtin_application_surface_enable);
     VM_registerBuiltin(ctx, "application_surface_draw_enable", builtin_application_surface_draw_enable);
