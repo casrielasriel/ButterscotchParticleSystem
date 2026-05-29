@@ -16,7 +16,7 @@ INCLUDES := -I. -Isrc -Ivendor/stb/ds -Isrc/image -Ivendor/stb/image -Ivendor/st
 HEADERS := $(wildcard src/*.h) $(shell find vendor -name '*.h')
 SRCS := $(wildcard src/*.c) $(wildcard src/image/*.c) $(wildcard vendor/bzip2/*.c) vendor/md5/md5.c vendor/sha1/sha1.c vendor/base64/base64.c
 
-PLATFORM := glfw
+DESKTOP_BACKEND := glfw3
 AUDIO_BACKEND := miniaudio
 
 ifdef BUTTERSCOTCH_COMMIT_DATE
@@ -42,20 +42,40 @@ ifndef DISABLE_WAD17
 DEFINES += -DENABLE_WAD17
 endif
 
+# TODO: add support for non-desktop backends
+SRCS += $(wildcard src/desktop/*.c) $(wildcard src/desktop/backends/$(DESKTOP_BACKEND).c)
+INCLUDES += -Isrc/desktop
+ifeq ($(DESKTOP_BACKEND),glfw3)
+GLFW3_LIBS += $(shell pkg-config --libs glfw3)
+LIBS += $(GLFW3_LIBS)
+DEFINES += -DUSE_GLFW3
+ENABLE_GLAD := 1
+endif
+ifeq ($(DESKTOP_BACKEND),glfw2)
+GLFW2_LIBS += $(shell pkg-config --libs libglfw)
+LIBS += $(GLFW2_LIBS)
+DEFINES += -DUSE_GLFW2
+ENABLE_GLAD := 1
+endif
+ifeq ($(DESKTOP_BACKEND),sdl1)
+SDL1_LIBS += $(shell pkg-config --libs sdl)
+LIBS += $(SDL1_LIBS)
+DEFINES += -DUSE_SDL1
+endif
+
 # GNU make doesn't have a way to do OR in conditionals, stupid language for clowns
 ifndef DISABLE_LEGACY_GL
 ENABLE_GL := 1
 endif
 ifndef DISABLE_MODERN_GL
-ifneq ($(PLATFORM),sdl)
 ENABLE_GL := 1
-endif
 endif
 
 ifdef ENABLE_GL
-INCLUDES += -Isrc/gl_common -Isrc/gl -Ivendor/glad/include
-SRCS += $(wildcard src/gl_common/*.c) vendor/glad/src/glad.c
+SRCS += $(wildcard src/gl_common/*.c)
+INCLUDES += -Isrc/gl_common -Isrc/gl
 HEADERS += $(wildcard src/gl_common/*.h)
+ENABLE_GLAD := 1
 endif
 
 ifndef DISABLE_LEGACY_GL
@@ -68,11 +88,9 @@ endif
 endif
 
 ifndef DISABLE_MODERN_GL
-ifneq ($(PLATFORM),sdl)
 DEFINES += -DENABLE_MODERN_GL
 SRCS += $(wildcard src/gl/*.c)
 HEADERS += $(wildcard src/gl/*.h)
-endif
 endif
 
 ifdef DISABLE_WAD14
@@ -84,12 +102,8 @@ endif
 endif
 
 ifdef DISABLE_LEGACY_GL
-ifeq ($(PLATFORM),sdl)
-$(error must enable at least 1 renderer)
-else
 ifdef DISABLE_MODERN_GL
 $(error must enable at least 1 renderer)
-endif
 endif
 endif
 
@@ -118,36 +132,13 @@ LIBS += -lopenal
 endif
 endif
 
-ifeq ($(PLATFORM),glfw)
-SRCS += $(wildcard src/glfw/*.c)
-HEADERS += $(wildcard src/glfw/*.h)
-DEFINES += -DUSE_GLFW
-ifdef USE_GLFW2
+ifdef ENABLE_GLAD
 ifdef ENABLE_GLES
-$(error can't enable both GLES and GLFW2 at the same time!)
-endif
-DEFINES += -DUSE_GLFW2
-SRCS := $(filter-out src/glfw/glfw_gamepad.c,$(SRCS))
-ifndef GLFW_LIBS
-GLFW_LIBS := $(shell pkg-config --libs libglfw)
-endif
+SRCS += vendor/glad-gles/src/glad.c
+INCLUDES += -Ivendor/glad-gles/include
 else
-ifndef GLFW_LIBS
-GLFW_LIBS := $(shell pkg-config --libs glfw3)
-endif
-endif
-LIBS += $(GLFW_LIBS)
-else
-ifeq ($(PLATFORM),sdl)
-SRCS += $(wildcard src/sdl/*.c)
-HEADERS += $(wildcard src/sdl/*.h)
-DEFINES += -DUSE_SDL
-ifndef SDL_LIBS
-SDL_LIBS := $(shell pkg-config --libs sdl)
-endif
-LIBS += $(SDL_LIBS)
-else
-$(error invalid platform)
+SRCS += vendor/glad/src/glad.c
+INCLUDES += -Ivendor/glad/include
 endif
 endif
 
