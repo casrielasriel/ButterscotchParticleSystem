@@ -249,7 +249,7 @@ void startRunner(const char* gamePath, const char* savesPath) {
             .parseGen8 = true,
             .parseOptn = true,
             .parseLang = true,
-            .parseExtn = false,
+            .parseExtn = true,
             .parseSond = true,
             .parseAgrp = true,
             .parseSprt = true,
