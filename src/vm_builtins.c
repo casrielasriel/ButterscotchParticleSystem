@@ -10793,6 +10793,58 @@ static RValue builtin_tilemap_get_y(VMContext* ctx, RValue* args, MAYBE_UNUSED i
     return RValue_makeReal((GMLReal) runtimeLayer->yOffset);
 }
 
+// tilemap_get_at_pixel(tilemapElementId, x, y): returns the raw tile cell value (index + mirror/flip/rotate bits) at the given room-space pixel coordinate, or -1 if the coordinate falls outside the tilemap.
+// (see GameMaker-HTML5 Function_Layers.js)
+static RValue builtin_tilemap_get_at_pixel(VMContext* ctx, RValue* args, MAYBE_UNUSED int32_t argCount) {
+    if (3 > argCount) return RValue_makeReal(-1.0);
+    Runner* runner = ctx->runner;
+    int32_t tilemapElementId = RValue_toInt32(args[0]);
+
+    RoomLayer* foundLayer = Runner_findRoomLayerById(runner, tilemapElementId);
+    if (foundLayer == nullptr || foundLayer->type != RoomLayerType_Tiles) return RValue_makeReal(-1.0);
+
+    RoomLayerTilesData* data = foundLayer->tilesData;
+    if (data == nullptr || data->tileData == nullptr) return RValue_makeReal(-1.0);
+    if (0 > data->backgroundIndex) return RValue_makeReal(-1.0);
+
+    DataWin* dw = runner->dataWin;
+    if ((uint32_t) data->backgroundIndex >= dw->bgnd.count) return RValue_makeReal(-1.0);
+
+    Background* tileset = &dw->bgnd.backgrounds[data->backgroundIndex];
+    uint32_t tileW = tileset->gms2TileWidth;
+    uint32_t tileH = tileset->gms2TileHeight;
+    if (tileW == 0 || tileH == 0) return RValue_makeReal(-1.0);
+
+    RuntimeLayer* runtimeLayer = Runner_findRuntimeLayerById(runner, tilemapElementId);
+    requireNotNullMessage(runtimeLayer, "Missing Runtime Layer! Bug?");
+    float offsetX = runtimeLayer->xOffset; // GameMaker-HTML5: m_x
+    float offsetY = runtimeLayer->yOffset; // GameMaker-HTML5: m_y
+
+    GMLReal x = RValue_toReal(args[1]) - (GMLReal) offsetX;
+    GMLReal y = RValue_toReal(args[2]) - (GMLReal) offsetY;
+
+    GMLReal mapPixelW = (GMLReal) (data->tilesX * tileW);
+    GMLReal mapPixelH = (GMLReal) (data->tilesY * tileH);
+    // ATTENTION!!!
+    // The GM-HTML5 runner has a bug here
+    // if(x>=tmpw)
+    //    return -1;
+    // if(y>tmph)
+    //    return -1;
+    // The ORIGINAL runner uses >= for both
+    if (0.0 > x || 0.0 > y || x >= mapPixelW || y >= mapPixelH) return RValue_makeReal(-1.0);
+
+    int32_t indexX = (int32_t) GMLReal_floor(x / (GMLReal) tileW);
+    int32_t indexY = (int32_t) GMLReal_floor(y / (GMLReal) tileH);
+    if (0 > indexX) indexX = 0;
+    if (0 > indexY) indexY = 0;
+    if (indexX >= (int32_t) data->tilesX) indexX = (int32_t) data->tilesX - 1;
+    if (indexY >= (int32_t) data->tilesY) indexY = (int32_t) data->tilesY - 1;
+
+    uint32_t cell = data->tileData[indexY * data->tilesX + indexX];
+    return RValue_makeReal((GMLReal) cell);
+}
+
 static RValue builtin_layer_get_all(VMContext* ctx, MAYBE_UNUSED RValue* args, MAYBE_UNUSED int32_t argCount) {
     Runner* runner = ctx->runner;
     RValue arr = VM_createArray(ctx);
@@ -12723,6 +12775,7 @@ void VMBuiltins_registerAll(VMContext* ctx) {
     VM_registerBuiltin(ctx, "tilemap_y", builtin_tilemap_y);
     VM_registerBuiltin(ctx, "tilemap_get_x", builtin_tilemap_get_x);
     VM_registerBuiltin(ctx, "tilemap_get_y", builtin_tilemap_get_y);
+    VM_registerBuiltin(ctx, "tilemap_get_at_pixel", builtin_tilemap_get_at_pixel);
 #endif
     VM_registerBuiltin(ctx, "layer_create", builtin_layer_create);
     VM_registerBuiltin(ctx, "layer_destroy", builtin_layer_destroy);
