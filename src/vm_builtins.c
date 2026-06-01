@@ -3271,8 +3271,8 @@ static RValue builtin_script_execute(VMContext* ctx, RValue* args, int32_t argCo
         codeId = -1;
 
 #if IS_WAD17_OR_HIGHER_ENABLED
-        // In GMS 2 BC17+, "scriptName" in source code is compiled as a FUNC-table index (same as builtin_method). Resolve funcIdx -> codeIndex via codeIndexByName.
-        if (IS_WAD17_OR_HIGHER(ctx) && rawArg >= 0 && ctx->dataWin->func.functionCount > (uint32_t) rawArg) {
+        // In GMS 2.3+, "scriptName" in source code is compiled as a FUNC-table index (same as builtin_method). Resolve funcIdx -> codeIndex via codeIndexByName
+        if (DataWin_isVersionAtLeast(ctx->dataWin, 2, 3, 0, 0) && rawArg >= 0 && ctx->dataWin->func.functionCount > (uint32_t) rawArg) {
             const char* funcName = ctx->dataWin->func.functions[rawArg].name;
             if (funcName != nullptr) {
                 ptrdiff_t idx = shgeti(ctx->codeIndexByName, (char*) funcName);
