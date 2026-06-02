@@ -122,6 +122,13 @@ void Runner_clearAllObjectLists(Runner* runner) {
 int32_t Runner_pushInstancesOfObject(Runner* runner, int32_t targetObjIndex) {
     int32_t base = (int32_t) arrlen(runner->instanceSnapshots);
 
+    if (targetObjIndex == INSTANCE_ALL) {
+        int32_t instanceCount = (int32_t) arrlen(runner->instances);
+        arrsetlen(runner->instanceSnapshots, base + instanceCount);
+        memcpy(&runner->instanceSnapshots[base], runner->instances, (size_t) instanceCount * sizeof(Instance*));
+        return base;
+    }
+
     if (0 > targetObjIndex || (uint32_t) targetObjIndex >= runner->dataWin->objt.count)
         return base;
 
