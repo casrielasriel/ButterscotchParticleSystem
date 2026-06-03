@@ -739,18 +739,26 @@ RValue VMBuiltins_getVariable(VMContext* ctx, int16_t builtinVarId, const char* 
         case BUILTIN_VAR_VIEW_CURRENT:
         case BUILTIN_VAR_CAMERA_VIEW:
             return RValue_makeReal((GMLReal) runner->viewCurrent);
-        case BUILTIN_VAR_VIEW_XVIEW:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].viewX);
+        case BUILTIN_VAR_VIEW_XVIEW: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) return RValue_makeReal((GMLReal) camera->viewX);
             return RValue_makeReal(0.0);
-        case BUILTIN_VAR_VIEW_YVIEW:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].viewY);
+        }
+        case BUILTIN_VAR_VIEW_YVIEW: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) return RValue_makeReal((GMLReal) camera->viewY);
             return RValue_makeReal(0.0);
-        case BUILTIN_VAR_VIEW_WVIEW:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].viewWidth);
+        }
+        case BUILTIN_VAR_VIEW_WVIEW: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) return RValue_makeReal((GMLReal) camera->viewWidth);
             return RValue_makeReal(0.0);
-        case BUILTIN_VAR_VIEW_HVIEW:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].viewHeight);
+        }
+        case BUILTIN_VAR_VIEW_HVIEW: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) return RValue_makeReal((GMLReal) camera->viewHeight);
             return RValue_makeReal(0.0);
+        }
         case BUILTIN_VAR_VIEW_XPORT:
             if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].portX);
             return RValue_makeReal(0.0);
@@ -766,24 +774,36 @@ RValue VMBuiltins_getVariable(VMContext* ctx, int16_t builtinVarId, const char* 
         case BUILTIN_VAR_VIEW_VISIBLE:
             if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeBool(runner->views[arrayIndex].enabled);
             return RValue_makeBool(false);
-        case BUILTIN_VAR_VIEW_ANGLE:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].viewAngle);
+        case BUILTIN_VAR_VIEW_ANGLE: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) return RValue_makeReal((GMLReal) camera->viewAngle);
             return RValue_makeReal(0.0);
-        case BUILTIN_VAR_VIEW_HBORDER:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].borderX);
+        }
+        case BUILTIN_VAR_VIEW_HBORDER: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) return RValue_makeReal((GMLReal) camera->borderX);
             return RValue_makeReal(0.0);
-        case BUILTIN_VAR_VIEW_VBORDER:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].borderY);
+        }
+        case BUILTIN_VAR_VIEW_VBORDER: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) return RValue_makeReal((GMLReal) camera->borderY);
             return RValue_makeReal(0.0);
-        case BUILTIN_VAR_VIEW_OBJECT:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].objectId);
+        }
+        case BUILTIN_VAR_VIEW_OBJECT: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) return RValue_makeReal((GMLReal) camera->objectId);
             return RValue_makeReal(INSTANCE_NOONE);
-        case BUILTIN_VAR_VIEW_HSPEED:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].speedX);
+        }
+        case BUILTIN_VAR_VIEW_HSPEED: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) return RValue_makeReal((GMLReal) camera->speedX);
             return RValue_makeReal(0.0);
-        case BUILTIN_VAR_VIEW_VSPEED:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) return RValue_makeReal((GMLReal) runner->views[arrayIndex].speedY);
+        }
+        case BUILTIN_VAR_VIEW_VSPEED: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) return RValue_makeReal((GMLReal) camera->speedY);
             return RValue_makeReal(0.0);
+        }
 
         // Background properties
         case BUILTIN_VAR_BACKGROUND_VISIBLE:
@@ -1329,18 +1349,26 @@ void VMBuiltins_setVariable(VMContext* ctx, int16_t builtinVarId, const char* na
             return;
 
         // View properties
-        case BUILTIN_VAR_VIEW_XVIEW:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].viewX = RValue_toInt32(val);
+        case BUILTIN_VAR_VIEW_XVIEW: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) camera->viewX = RValue_toInt32(val);
             return;
-        case BUILTIN_VAR_VIEW_YVIEW:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].viewY = RValue_toInt32(val);
+        }
+        case BUILTIN_VAR_VIEW_YVIEW: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) camera->viewY = RValue_toInt32(val);
             return;
-        case BUILTIN_VAR_VIEW_WVIEW:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].viewWidth = RValue_toInt32(val);
+        }
+        case BUILTIN_VAR_VIEW_WVIEW: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) camera->viewWidth = RValue_toInt32(val);
             return;
-        case BUILTIN_VAR_VIEW_HVIEW:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].viewHeight = RValue_toInt32(val);
+        }
+        case BUILTIN_VAR_VIEW_HVIEW: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) camera->viewHeight = RValue_toInt32(val);
             return;
+        }
         case BUILTIN_VAR_VIEW_XPORT:
             if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].portX = RValue_toInt32(val);
             return;
@@ -1356,24 +1384,36 @@ void VMBuiltins_setVariable(VMContext* ctx, int16_t builtinVarId, const char* na
         case BUILTIN_VAR_VIEW_VISIBLE:
             if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].enabled = RValue_toBool(val);
             return;
-        case BUILTIN_VAR_VIEW_ANGLE:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].viewAngle = (float) RValue_toReal(val);
+        case BUILTIN_VAR_VIEW_ANGLE: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) camera->viewAngle = (float) RValue_toReal(val);
             return;
-        case BUILTIN_VAR_VIEW_HBORDER:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].borderX = RValue_toInt32(val);
+        }
+        case BUILTIN_VAR_VIEW_HBORDER: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) camera->borderX = RValue_toInt32(val);
             return;
-        case BUILTIN_VAR_VIEW_VBORDER:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].borderY = RValue_toInt32(val);
+        }
+        case BUILTIN_VAR_VIEW_VBORDER: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) camera->borderY = RValue_toInt32(val);
             return;
-        case BUILTIN_VAR_VIEW_OBJECT:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].objectId = RValue_toInt32(val);
+        }
+        case BUILTIN_VAR_VIEW_OBJECT: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) camera->objectId = RValue_toInt32(val);
             return;
-        case BUILTIN_VAR_VIEW_HSPEED:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].speedX = RValue_toInt32(val);
+        }
+        case BUILTIN_VAR_VIEW_HSPEED: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) camera->speedX = RValue_toInt32(val);
             return;
-        case BUILTIN_VAR_VIEW_VSPEED:
-            if (arrayIndex >= 0 && MAX_VIEWS > arrayIndex) runner->views[arrayIndex].speedY = RValue_toInt32(val);
+        }
+        case BUILTIN_VAR_VIEW_VSPEED: {
+            GMLCamera* camera = Runner_getCameraForView(runner, arrayIndex);
+            if (camera != nullptr) camera->speedY = RValue_toInt32(val);
             return;
+        }
 
         // Background properties
         case BUILTIN_VAR_BACKGROUND_VISIBLE:
@@ -2967,97 +3007,80 @@ static RValue builtin_room_set_persistent(VMContext* ctx, RValue* args, MAYBE_UN
 }
 
 // GMS2 camera compatibility - we treat view index as camera ID
-static RValue builtin_view_get_camera(MAYBE_UNUSED VMContext* ctx, RValue* args, int32_t argCount) {
+static RValue builtin_view_get_camera(VMContext* ctx, RValue* args, int32_t argCount) {
     if (1 > argCount) return RValue_makeReal(-1);
+    Runner* runner = ctx->runner;
     int32_t viewIndex = RValue_toInt32(args[0]);
     if (viewIndex >= 0 && MAX_VIEWS > viewIndex) {
-        return RValue_makeReal(viewIndex);
+        return RValue_makeReal(runner->views[viewIndex].cameraId);
     }
     return RValue_makeReal(-1);
 }
 
 static RValue builtin_camera_get_view_x(VMContext* ctx, RValue* args, int32_t argCount) {
     if (1 > argCount) return RValue_makeReal(-1);
-    Runner* runner = requireNotNullMessage(ctx->runner, "VM: camera_get_view_x called but no runner!");
-    int32_t cameraId = RValue_toInt32(args[0]);
-    if (cameraId >= 0 && MAX_VIEWS > cameraId) {
-        return RValue_makeReal(runner->views[cameraId].viewX);
-    }
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) return RValue_makeReal(camera->viewX);
     return RValue_makeReal(-1);
 }
 
 static RValue builtin_camera_get_view_y(VMContext* ctx, RValue* args, int32_t argCount) {
     if (1 > argCount) return RValue_makeReal(-1);
-    Runner* runner = requireNotNullMessage(ctx->runner, "VM: camera_get_view_y called but no runner!");
-    int32_t cameraId = RValue_toInt32(args[0]);
-    if (cameraId >= 0 && MAX_VIEWS > cameraId) {
-        return RValue_makeReal(runner->views[cameraId].viewY);
-    }
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) return RValue_makeReal(camera->viewY);
     return RValue_makeReal(-1);
 }
 
 static RValue builtin_camera_get_view_width(VMContext* ctx, RValue* args, int32_t argCount) {
     if (1 > argCount) return RValue_makeReal(-1);
-    Runner* runner = requireNotNullMessage(ctx->runner, "VM: camera_get_view_width called but no runner!");
-    int32_t cameraId = RValue_toInt32(args[0]);
-    if (cameraId >= 0 && MAX_VIEWS > cameraId) {
-        return RValue_makeReal(runner->views[cameraId].viewWidth);
-    }
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) return RValue_makeReal(camera->viewWidth);
     return RValue_makeReal(-1);
 }
 
 static RValue builtin_camera_get_view_height(VMContext* ctx, RValue* args, int32_t argCount) {
     if (1 > argCount) return RValue_makeReal(-1);
-    Runner* runner = requireNotNullMessage(ctx->runner, "VM: camera_get_view_height called but no runner!");
-    int32_t cameraId = RValue_toInt32(args[0]);
-    if (cameraId >= 0 && MAX_VIEWS > cameraId) {
-        return RValue_makeReal(runner->views[cameraId].viewHeight);
-    }
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) return RValue_makeReal(camera->viewHeight);
     return RValue_makeReal(-1);
 }
 
 static RValue builtin_camera_set_view_pos(VMContext* ctx, RValue* args, int32_t argCount) {
-    if (1 > argCount) return RValue_makeReal(-1);
-    Runner* runner = requireNotNullMessage(ctx->runner, "VM: camera_set_view_pos called but no runner!");
-    int32_t cameraId = RValue_toInt32(args[0]);
-    int32_t x = RValue_toInt32(args[1]);
-    int32_t y = RValue_toInt32(args[2]);
-    if (cameraId >= 0 && MAX_VIEWS > cameraId) {
-        runner->views[cameraId].viewX = x;
-        runner->views[cameraId].viewY = y;
+    if (3 > argCount) return RValue_makeUndefined();
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) {
+        camera->viewX = RValue_toInt32(args[1]);
+        camera->viewY = RValue_toInt32(args[2]);
     }
     return RValue_makeUndefined();
 }
 
 static RValue builtin_camera_get_view_target(VMContext* ctx, RValue* args, int32_t argCount) {
     if (1 > argCount) return RValue_makeReal(-1);
-    Runner* runner = requireNotNullMessage(ctx->runner, "VM: camera_get_view_target called but no runner!");
-    int32_t cameraId = RValue_toInt32(args[0]);
-    if (cameraId >= 0 && MAX_VIEWS > cameraId) {
-        return RValue_makeReal(runner->views[cameraId].objectId);
-    }
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) return RValue_makeReal(camera->objectId);
     return RValue_makeReal(-1);
 }
 
 static RValue builtin_camera_set_view_target(VMContext* ctx, RValue* args, int32_t argCount) {
     if (2 > argCount) return RValue_makeUndefined();
-    Runner* runner = requireNotNullMessage(ctx->runner, "VM: camera_set_view_target called but no runner!");
-    int32_t cameraId = RValue_toInt32(args[0]);
-    int32_t objectId = RValue_toInt32(args[1]);
-    if (cameraId >= 0 && MAX_VIEWS > cameraId) {
-        runner->views[cameraId].objectId = objectId;
-    }
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) camera->objectId = RValue_toInt32(args[1]);
     return RValue_makeUndefined();
 }
 
 static RValue cameraGetViewBorder(VMContext* ctx, RValue* args, int32_t argCount, bool wantY) {
     if (1 > argCount) return RValue_makeReal(-1);
-    Runner* runner = requireNotNullMessage(ctx->runner, "VM: camera_get_view_border called but no runner!");
-    int32_t cameraId = RValue_toInt32(args[0]);
-    if (cameraId >= 0 && MAX_VIEWS > cameraId) {
-        RuntimeView v = runner->views[cameraId];
-        return RValue_makeReal((wantY ? v.borderY : v.borderX));
-    }
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) return RValue_makeReal((wantY ? camera->borderY : camera->borderX));
     return RValue_makeReal(-1);
 }
 
@@ -3071,15 +3094,146 @@ static RValue builtin_camera_get_view_border_y(VMContext* ctx, RValue* args, int
 
 static RValue builtin_camera_set_view_border(VMContext* ctx, RValue* args, int32_t argCount) {
     if (3 > argCount) return RValue_makeUndefined();
-    Runner* runner = requireNotNullMessage(ctx->runner, "VM: camera_set_view_border called but no runner!");
-    int32_t cameraId = RValue_toInt32(args[0]);
-    int32_t bx = RValue_toInt32(args[1]);
-    int32_t by = RValue_toInt32(args[2]);
-    if (cameraId >= 0 && MAX_VIEWS > cameraId) {
-        runner->views[cameraId].borderX = (uint32_t) bx;
-        runner->views[cameraId].borderY = (uint32_t) by;
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) {
+        camera->borderX = (uint32_t) RValue_toInt32(args[1]);
+        camera->borderY = (uint32_t) RValue_toInt32(args[2]);
     }
     return RValue_makeUndefined();
+}
+
+static RValue builtin_camera_set_view_size(VMContext* ctx, RValue* args, int32_t argCount) {
+    if (3 > argCount) return RValue_makeUndefined();
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) {
+        camera->viewWidth = RValue_toInt32(args[1]);
+        camera->viewHeight = RValue_toInt32(args[2]);
+    }
+    return RValue_makeUndefined();
+}
+
+static RValue builtin_camera_set_view_speed(VMContext* ctx, RValue* args, int32_t argCount) {
+    if (3 > argCount) return RValue_makeUndefined();
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) {
+        camera->speedX = RValue_toInt32(args[1]);
+        camera->speedY = RValue_toInt32(args[2]);
+    }
+    return RValue_makeUndefined();
+}
+
+static RValue builtin_camera_set_view_angle(VMContext* ctx, RValue* args, int32_t argCount) {
+    if (2 > argCount) return RValue_makeUndefined();
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) camera->viewAngle = (float) RValue_toReal(args[1]);
+    return RValue_makeUndefined();
+}
+
+static RValue builtin_camera_get_view_angle(VMContext* ctx, RValue* args, int32_t argCount) {
+    if (1 > argCount) return RValue_makeReal(-1);
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) return RValue_makeReal((GMLReal) camera->viewAngle);
+    return RValue_makeReal(0.0);
+}
+
+static RValue builtin_camera_get_view_speed_x(VMContext* ctx, RValue* args, int32_t argCount) {
+    if (1 > argCount) return RValue_makeReal(-1);
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) return RValue_makeReal(camera->speedX);
+    return RValue_makeReal(-1);
+}
+
+static RValue builtin_camera_get_view_speed_y(VMContext* ctx, RValue* args, int32_t argCount) {
+    if (1 > argCount) return RValue_makeReal(-1);
+    Runner* runner = ctx->runner;
+    GMLCamera* camera = Runner_getCameraById(runner, RValue_toInt32(args[0]));
+    if (camera != nullptr) return RValue_makeReal(camera->speedY);
+    return RValue_makeReal(-1);
+}
+
+// Allocates a user camera in the first free userCameras slot. Returns its logical camera id, or -1 if the pool is full.
+static int32_t allocUserCamera(Runner* runner) {
+    repeat(MAX_USER_CAMERAS, slot) {
+        GMLCamera* camera = &runner->userCameras[slot];
+        if (!camera->allocated) {
+            memset(camera, 0, sizeof(*camera));
+            camera->allocated = true;
+            camera->objectId = -1;
+            return MAX_DEFAULT_ROOM_CAMERAS + slot;
+        }
+    }
+    return -1;
+}
+
+static RValue builtin_camera_create(VMContext* ctx, MAYBE_UNUSED RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    return RValue_makeReal(allocUserCamera(runner));
+}
+
+static RValue builtin_camera_create_view(VMContext* ctx, RValue* args, int32_t argCount) {
+    Runner* runner = ctx->runner;
+    int32_t id = allocUserCamera(runner);
+    if (0 > id) return RValue_makeReal(-1);
+    GMLCamera* camera = Runner_getCameraById(runner, id);
+    // camera_create_view(room_x, room_y, room_w, room_h, [angle, object, x_speed, y_speed, x_border, y_border])
+    if (argCount > 0) camera->viewX = RValue_toInt32(args[0]);
+    if (argCount > 1) camera->viewY = RValue_toInt32(args[1]);
+    if (argCount > 2) camera->viewWidth = RValue_toInt32(args[2]);
+    if (argCount > 3) camera->viewHeight = RValue_toInt32(args[3]);
+    if (argCount > 4) camera->viewAngle = (float) RValue_toReal(args[4]);
+    if (argCount > 5) camera->objectId = RValue_toInt32(args[5]);
+    if (argCount > 6) camera->speedX = RValue_toInt32(args[6]);
+    if (argCount > 7) camera->speedY = RValue_toInt32(args[7]);
+    if (argCount > 8) camera->borderX = (uint32_t) RValue_toInt32(args[8]);
+    if (argCount > 9) camera->borderY = (uint32_t) RValue_toInt32(args[9]);
+    return RValue_makeReal(id);
+}
+
+static RValue builtin_camera_destroy(VMContext* ctx, RValue* args, int32_t argCount) {
+    if (1 > argCount) return RValue_makeUndefined();
+    Runner* runner = ctx->runner;
+    int32_t id = RValue_toInt32(args[0]);
+    // Only user cameras (logical ids past the reserved default-camera range) can be destroyed; default room cameras are not.
+    if (id < MAX_DEFAULT_ROOM_CAMERAS || MAX_CAMERAS <= id) return RValue_makeUndefined();
+    runner->userCameras[id - MAX_DEFAULT_ROOM_CAMERAS].allocated = false;
+    // Detach any view that referenced this camera so it doesn't dangle.
+    repeat(MAX_VIEWS, vi) {
+        if (runner->views[vi].cameraId == id) runner->views[vi].cameraId = -1;
+    }
+    return RValue_makeUndefined();
+}
+
+static RValue builtin_view_set_camera(VMContext* ctx, RValue* args, int32_t argCount) {
+    if (2 > argCount) return RValue_makeUndefined();
+    Runner* runner = ctx->runner;
+    int32_t viewIndex = RValue_toInt32(args[0]);
+    int32_t cameraId = RValue_toInt32(args[1]);
+    if (viewIndex < 0 || MAX_VIEWS <= viewIndex) return RValue_makeUndefined();
+    // Accept -1 (detach) or any allocated camera id.
+    if (cameraId == -1 || Runner_getCameraById(runner, cameraId) != nullptr) {
+        runner->views[viewIndex].cameraId = cameraId;
+    }
+    return RValue_makeUndefined();
+}
+
+// The camera of the view currently being drawn (we have no camera_apply active-camera register, so this tracks view_current).
+static RValue builtin_camera_get_active(VMContext* ctx, MAYBE_UNUSED RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    if (runner->viewCurrent >= 0 && MAX_VIEWS > runner->viewCurrent) {
+        return RValue_makeReal(runner->views[runner->viewCurrent].cameraId);
+    }
+    return RValue_makeReal(-1);
+}
+
+static RValue builtin_camera_get_default(VMContext* ctx, MAYBE_UNUSED RValue* args, MAYBE_UNUSED int32_t argCount) {
+    Runner* runner = ctx->runner;
+    return RValue_makeReal(runner->views[0].cameraId);
 }
 
 // ===[ VARIABLE FUNCTIONS ]===
@@ -12808,6 +12962,18 @@ void VMBuiltins_registerAll(VMContext* ctx) {
     VM_registerBuiltin(ctx, "camera_get_view_border_x", builtin_camera_get_view_border_x);
     VM_registerBuiltin(ctx, "camera_get_view_border_y", builtin_camera_get_view_border_y);
     VM_registerBuiltin(ctx, "camera_set_view_border", builtin_camera_set_view_border);
+    VM_registerBuiltin(ctx, "camera_set_view_size", builtin_camera_set_view_size);
+    VM_registerBuiltin(ctx, "camera_set_view_speed", builtin_camera_set_view_speed);
+    VM_registerBuiltin(ctx, "camera_set_view_angle", builtin_camera_set_view_angle);
+    VM_registerBuiltin(ctx, "camera_get_view_angle", builtin_camera_get_view_angle);
+    VM_registerBuiltin(ctx, "camera_get_view_speed_x", builtin_camera_get_view_speed_x);
+    VM_registerBuiltin(ctx, "camera_get_view_speed_y", builtin_camera_get_view_speed_y);
+    VM_registerBuiltin(ctx, "camera_create", builtin_camera_create);
+    VM_registerBuiltin(ctx, "camera_create_view", builtin_camera_create_view);
+    VM_registerBuiltin(ctx, "camera_destroy", builtin_camera_destroy);
+    VM_registerBuiltin(ctx, "view_set_camera", builtin_view_set_camera);
+    VM_registerBuiltin(ctx, "camera_get_active", builtin_camera_get_active);
+    VM_registerBuiltin(ctx, "camera_get_default", builtin_camera_get_default);
 
     // Variables
     VM_registerBuiltin(ctx, "variable_global_exists", builtin_variable_global_exists);
